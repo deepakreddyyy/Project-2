@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroClass - CNN Image Classifier</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glow-1"></div>
+    <div class="background-glow-2"></div>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-brain logo-icon"></i>
+                <span class="logo-text">NeuroClass</span>
+            </div>
+            <div class="subtitle">Convolutional Neural Network (CNN) Image Classifier</div>
+            <p class="description">
+                Upload your own image or choose from the CIFAR-10 gallery below. Our deep learning model is powered by a 6-layer custom CNN trained with PyTorch.
+            </p>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="main-grid">
+            
+            <!-- Left Side: Upload and Samples -->
+            <section class="control-panel glass-card">
+                <h2><i class="fa-solid fa-cloud-arrow-up icon"></i> Image Input</h2>
+                
+                <!-- Drag and Drop Dropzone -->
+                <div class="dropzone" id="dropzone">
+                    <input type="file" id="fileInput" accept="image/*" class="file-input">
+                    <div class="dropzone-content">
+                        <i class="fa-solid fa-image dropzone-icon"></i>
+                        <p class="dropzone-text">Drag & drop your image here or <span>browse</span></p>
+                        <p class="dropzone-info">Supports JPG, PNG, JPEG</p>
+                    </div>
+                    <div class="preview-container" id="previewContainer">
+                        <img id="imagePreview" src="" alt="Selected Image Preview" class="image-preview">
+                        <button type="button" class="remove-btn" id="removeBtn" title="Remove image">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sample Gallery -->
+                <div class="gallery-section">
+                    <div class="gallery-header-row">
+                        <h3><i class="fa-solid fa-images icon"></i> CIFAR-10 Sample Gallery</h3>
+                        <div class="set-selector-container">
+                            <label for="sampleSetSelect" class="selector-label">Gallery Set:</label>
+                            <select id="sampleSetSelect" class="set-select">
+                                <option value="1" selected>Set 1 (High Conf)</option>
+                                <option value="2">Set 2</option>
+                                <option value="3">Set 3</option>
+                                <option value="4">Set 4</option>
+                                <option value="5">Set 5</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="gallery-tip">Click a sample to test the model instantly:</p>
+                    <div class="gallery-grid" id="galleryGrid">
+                        <!-- Sample cards will be loaded here via JS -->
+                        <div class="sample-card" data-class="airplane">
+                            <img src="samples/airplane_1.png" alt="airplane" id="img-airplane">
+                            <span>Airplane</span>
+                        </div>
+                        <div class="sample-card" data-class="automobile">
+                            <img src="samples/automobile_1.png" alt="automobile" id="img-automobile">
+                            <span>Auto</span>
+                        </div>
+                        <div class="sample-card" data-class="bird">
+                            <img src="samples/bird_1.png" alt="bird" id="img-bird">
+                            <span>Bird</span>
+                        </div>
+                        <div class="sample-card" data-class="cat">
+                            <img src="samples/cat_1.png" alt="cat" id="img-cat">
+                            <span>Cat</span>
+                        </div>
+                        <div class="sample-card" data-class="deer">
+                            <img src="samples/deer_1.png" alt="deer" id="img-deer">
+                            <span>Deer</span>
+                        </div>
+                        <div class="sample-card" data-class="dog">
+                            <img src="samples/dog_1.png" alt="dog" id="img-dog">
+                            <span>Dog</span>
+                        </div>
+                        <div class="sample-card" data-class="frog">
+                            <img src="samples/frog_1.png" alt="frog" id="img-frog">
+                            <span>Frog</span>
+                        </div>
+                        <div class="sample-card" data-class="horse">
+                            <img src="samples/horse_1.png" alt="horse" id="img-horse">
+                            <span>Horse</span>
+                        </div>
+                        <div class="sample-card" data-class="ship">
+                            <img src="samples/ship_1.png" alt="ship" id="img-ship">
+                            <span>Ship</span>
+                        </div>
+                        <div class="sample-card" data-class="truck">
+                            <img src="samples/truck_1.png" alt="truck" id="img-truck">
+                            <span>Truck</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Classification Results -->
+            <section class="results-panel glass-card">
+                <h2><i class="fa-solid fa-chart-simple icon"></i> Prediction Results</h2>
+                
+                <!-- Initial State (No prediction yet) -->
+                <div class="results-placeholder" id="resultsPlaceholder">
+                    <i class="fa-solid fa-circle-nodes placeholder-icon"></i>
+                    <p>Select or upload an image to view the neural network's predictions.</p>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div class="loading-container" id="loadingContainer">
+                    <div class="spinner"></div>
+                    <p>Processing image through CNN layers...</p>
+                </div>
+
+                <!-- Prediction Content -->
+                <div class="results-content" id="resultsContent">
+                    
+                    <!-- Top Prediction Banner -->
+                    <div class="top-result-banner">
+                        <div class="top-label">Primary Classification</div>
+                        <div class="top-class" id="topClass">CAT</div>
+                        <div class="top-confidence-wrapper">
+                            <span class="top-confidence-num" id="topConfidenceNum">95.4</span><span class="percent">%</span>
+                            <span class="confidence-label">confidence</span>
+                        </div>
+                    </div>
+
+                    <!-- Meta Details -->
+                    <div class="meta-details">
+                        <div class="meta-item">
+                            <span class="meta-label">Original Dimensions:</span>
+                            <span class="meta-val" id="metaDimensions">300x200</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Hardware Device:</span>
+                            <span class="meta-val" id="metaDevice">cuda (NVIDIA GPU)</span>
+                        </div>
+                    </div>
+
+                    <!-- Visual Comparison: Preprocessed Image -->
+                    <div class="cnn-vision-wrapper">
+                        <div class="cnn-vision-header">
+                            <span>What the CNN Sees (Resized to 32x32)</span>
+                            <i class="fa-solid fa-eye cnn-eye-icon"></i>
+                        </div>
+                        <div class="cnn-vision-box">
+                            <canvas id="cnnCanvas" width="32" height="32" class="cnn-canvas"></canvas>
+                            <div class="cnn-vision-explain">
+                                The model resizes the input image to exactly 32x32 pixels and normalizes the color channels before feeding it into the first convolutional layer.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Class Probabilities Stack -->
+                    <div class="probabilities-section">
+                        <h3>Probability Distribution</h3>
+                        <div class="probabilities-stack" id="probabilitiesStack">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                    
+                </div>
+            </section>
+        </main>
+        
+        <!-- System Status Bar -->
+        <footer>
+            <div class="system-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">Backend Server Connected</span>
+            </div>
+            <div class="footer-links">
+                <span class="footer-item">Project 2.1 - Image Classification</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script file -->
+    <script src="script.js"></script>
+</body>
+</html>
