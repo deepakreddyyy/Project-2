@@ -6,16 +6,12 @@ from PIL import Image
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-# Import preprocessing and model structure
 from preprocess import preprocess_image_for_inference
 from train import SimpleCNN
 
-# CIFAR-10 class labels
 CLASSES = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
-# Initialize Flask app
 app = Flask(__name__)
-# Enable CORS
 CORS(app)
 
 MODEL_PATH = "best_cnn_model.pth"
@@ -40,22 +36,18 @@ def load_model():
         print(f"Error loading model: {e}")
         sys.exit(1)
 
-# Serve the static frontend files
 @app.route('/')
 def index():
     return send_from_directory('static', 'index.html')
 
-# Serve other static files (CSS, JS, sample images) from the static folder
 @app.route('/<path:path>')
 def serve_static(path):
     return send_from_directory('static', path)
 
-# Endpoint to predict uploaded images or sample gallery images
 @app.route('/predict', methods=['POST'])
 def predict():
     global model, device
-    
-    # Reload model if it was trained after startup
+   
     if model is None:
         if os.path.exists(MODEL_PATH):
             load_model()
@@ -67,17 +59,14 @@ def predict():
 
     img = None
     img_name = "Uploaded Image"
-    
-    # Check if this is a sample image request (JSON with sample name)
+
     if request.is_json:
         data = request.get_json(silent=True)
         if data and 'sample_class' in data:
             sample_class = data['sample_class']
             sample_set = data.get('sample_set', 1)
-            # Try to load set specific image: e.g., airplane_2.png
             sample_path = os.path.join('static', 'samples', f"{sample_class}_{sample_set}.png")
             if not os.path.exists(sample_path):
-                # Fallback to default name: airplane.png
                 sample_path = os.path.join('static', 'samples', f"{sample_class}.png")
                 
             if os.path.exists(sample_path):
@@ -85,8 +74,6 @@ def predict():
                 img_name = f"Sample {sample_class.capitalize()} (Set {sample_set})"
             else:
                 return jsonify({"status": "error", "message": f"Sample image for '{sample_class}' not found."}), 400
-    
-    # Otherwise, check for uploaded file
     if img is None:
         if 'image' not in request.files:
             return jsonify({"status": "error", "message": "No image file or sample class provided."}), 400
@@ -100,18 +87,13 @@ def predict():
             return jsonify({"status": "error", "message": f"Invalid image file: {str(e)}"}), 400
 
     try:
-        # Save original dimensions
         orig_width, orig_height = img.size
-        
-        # Preprocess and move tensor to device
         tensor = preprocess_image_for_inference(img).to(device)
         
-        # Run model prediction
         with torch.no_grad():
             outputs = model(tensor)
             probabilities = F.softmax(outputs, dim=1)[0]
             
-        # Format prediction results
         scores, indices = torch.sort(probabilities, descending=True)
         
         top_prediction = CLASSES[indices[0].item()]
@@ -140,8 +122,6 @@ def predict():
         return jsonify({"status": "error", "message": f"Prediction error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    # Initial load attempt
     load_model()
-    # Run the web server
     print("Starting Flask web server on port 5000...")
     app.run(host='127.0.0.1', port=5000, debug=True)
